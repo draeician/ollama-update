@@ -34,6 +34,10 @@ def setup_sudoers():
 
 def add_env_variables(service_file_path):
     env_vars = [
+        'Environment="OLLAMA_HOST=0.0.0.0:11434"',
+        'Environment="OLLAMA_ORIGINS=*"'
+    ]
+    additional_lines = [
         'EnvironmentFile=/etc/default/ollama',
         'ExecStartPre=/bin/bash -c \'if [ -f /etc/default/ollama ]; then echo "Loaded environment file: /etc/default/ollama"; fi\''
     ]
@@ -61,10 +65,10 @@ def add_env_variables(service_file_path):
             if lines[-1].strip() != "":
                 lines.append("\n")
 
-        # Add environment variables if they are not already in the file
-        for env_var in env_vars:
-            if not any(env_var in line for line in lines):
-                lines.insert(insert_pos, env_var + "\n")
+        # Add additional lines if they are not already in the file
+        for additional_line in additional_lines:
+            if not any(additional_line in line for line in lines):
+                lines.insert(insert_pos, additional_line + "\n")
                 insert_pos += 1  # Increment insert position for the next variable
                 changes_made = True
 
@@ -101,3 +105,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
