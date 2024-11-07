@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# curl -fsSL https://ollama.com/install.sh | OLLAMA_VERSION=0.4.0-rc6 sh
+
 import argparse
 import subprocess
 import getpass
