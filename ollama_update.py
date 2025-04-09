@@ -30,15 +30,66 @@ def update_ollama(version=None):
         execute_shell_command("/tmp/update_ollama.sh", require_sudo=True)
 
 def setup_sudoers():
+    """Setup sudoers file for the current user.
+    
+    This function will:
+    1. Create a sudoers file for the current user
+    2. Set proper permissions and ownership
+    3. Ensure the user can run the update script without password
+    """
     username = getpass.getuser()
-    sudoers_content = f"{username} ALL=(ALL) NOPASSWD: /usr/local/bin/update_ollama.sh\n"
+    sudoers_content = f"{username} ALL=(ALL) NOPASSWD: /tmp/update_ollama.sh\n"
     sudoers_file = "/etc/sudoers.d/ollama-update"
+    temp_file = "/tmp/ollama-sudoers.tmp"
+    
     try:
-        with open(sudoers_file, "w") as file:
+        print(f"Setting up sudoers for user {username}")
+        
+        # Create temporary file with content
+        with open(temp_file, "w") as file:
             file.write(sudoers_content)
-        print("Sudoers file updated. Please ensure correctness manually.")
+        
+        # Set correct permissions on temp file
+        os.chmod(temp_file, 0o644)
+        
+        # Move temp file to sudoers.d with sudo
+        result = subprocess.run(['sudo', 'mv', temp_file, sudoers_file], 
+                             capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Error moving file: {result.stderr}")
+            raise subprocess.CalledProcessError(result.returncode, result.args)
+        
+        # Set correct ownership (root:root)
+        result = subprocess.run(['sudo', 'chown', 'root:root', sudoers_file], 
+                             capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Error setting ownership: {result.stderr}")
+            raise subprocess.CalledProcessError(result.returncode, result.args)
+        
+        # Set correct permissions (0440)
+        result = subprocess.run(['sudo', 'chmod', '0440', sudoers_file], 
+                             capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Error setting permissions: {result.stderr}")
+            raise subprocess.CalledProcessError(result.returncode, result.args)
+        
+        print(f"Successfully set up sudoers for user {username}")
+        print(f"Sudoers file created at {sudoers_file}")
+        
     except IOError as e:
-        print(f"Error writing to {sudoers_file}: {e}")
+        print(f"IOError managing sudoers file: {e}")
+        raise
+    except subprocess.CalledProcessError as e:
+        print(f"Command failed with error: {e}")
+        print(f"Command output: {e.output if hasattr(e, 'output') else 'No output'}")
+        raise
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        raise
+    finally:
+        # Clean up temp file if it exists
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
 
 def add_env_variables(service_file_path):
     env_vars = [
@@ -118,7 +169,7 @@ def list_versions():
 def main():
     username = getpass.getuser()  # Dynamically get the current username
     parser = argparse.ArgumentParser(description='Ollama service updater script.')
-    parser.add_argument('--setup', action='store_true', help='Setup sudoers for ollama update script.')
+    parser.add_argument('--setup', action='store_true', help='Setup sudoers for the current user')
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
     parser.add_argument('--set-version', type=str, help='Specify a specific version to install (e.g., 0.4.0-rc6)')
     parser.add_argument('--list-versions', action='store_true', help='List available Ollama versions')
@@ -132,10 +183,10 @@ def main():
 
     service_file_path = "/etc/systemd/system/ollama.service"
 
-    if args.list_versions:
-        list_versions()
-    elif args.setup:
+    if args.setup:
         setup_sudoers()
+    elif args.list_versions:
+        list_versions()
     else:
         update_ollama(args.set_version)
         if add_env_variables(service_file_path):
