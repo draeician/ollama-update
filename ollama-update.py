@@ -104,6 +104,15 @@ def setup_sudoers():
         execute_shell_command(f"sudo chmod +x {destination_path}", require_sudo=True)
         print(f"Script installed to {destination_path}")
         
+        # Register shell completion for Bash
+        completion_script = f"complete -W '--setup --version --set-version --list-versions --update' {os.path.basename(script_path)}"
+        completion_file = "/etc/bash_completion.d/ollama-update"
+        with open(temp_file, "w") as file:
+            file.write(completion_script)
+        execute_shell_command(f"sudo mv {temp_file} {completion_file}", require_sudo=True)
+        execute_shell_command(f"sudo chmod 644 {completion_file}", require_sudo=True)
+        print(f"Bash completion script installed to {completion_file}")
+        
     except IOError as e:
         print(f"IOError managing sudoers file: {e}")
         raise
