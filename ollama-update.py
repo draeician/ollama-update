@@ -8,7 +8,7 @@ import getpass
 import os
 import sys
 
-__version__ = "1.2.3"
+__version__ = "1.3.0"
 
 def execute_shell_command(command, require_sudo=False):
     if require_sudo:
@@ -96,6 +96,13 @@ def setup_sudoers():
         
         print(f"Successfully set up sudoers for user {username}")
         print(f"Sudoers file created at {sudoers_file}")
+        
+        # Copy the script to /usr/local/bin
+        script_path = os.path.abspath(__file__)
+        destination_path = f"/usr/local/bin/{os.path.basename(script_path)}"
+        execute_shell_command(f"sudo cp {script_path} {destination_path}", require_sudo=True)
+        execute_shell_command(f"sudo chmod +x {destination_path}", require_sudo=True)
+        print(f"Script installed to {destination_path}")
         
     except IOError as e:
         print(f"IOError managing sudoers file: {e}")
