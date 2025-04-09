@@ -7,6 +7,8 @@ import subprocess
 import getpass
 import os
 
+__version__ = "1.0.0"
+
 def execute_shell_command(command, require_sudo=False):
     if require_sudo:
         command = f"sudo {command}"
@@ -17,11 +19,11 @@ def execute_shell_command(command, require_sudo=False):
 
 def update_ollama():
     # Step 1: Download the script
-    execute_shell_command("curl -fsSL -o ./update_ollama.sh https://ollama.com/install.sh")
+    execute_shell_command("curl -fsSL -o /home/draeician/pappas_bag/update_ollama.sh https://ollama.com/install.sh")
     # Step 2: Make the script executable
-    execute_shell_command("chmod +x ./update_ollama.sh")
+    execute_shell_command("chmod +x /home/draeician/pappas_bag/update_ollama.sh")
     # Step 3: Execute the script with elevated privileges
-    execute_shell_command("./update_ollama.sh", require_sudo=True)
+    execute_shell_command("/home/draeician/pappas_bag/update_ollama.sh", require_sudo=True)
 
 def setup_sudoers():
     username = getpass.getuser()
@@ -94,6 +96,7 @@ def main():
     username = getpass.getuser()  # Dynamically get the current username
     parser = argparse.ArgumentParser(description='Ollama service updater script.')
     parser.add_argument('--setup', action='store_true', help='Setup sudoers for ollama update script.')
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
     args = parser.parse_args()
 
     service_file_path = "/etc/systemd/system/ollama.service"
