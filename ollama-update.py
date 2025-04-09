@@ -9,7 +9,7 @@ import os
 import sys
 import shutil
 
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 
 def execute_shell_command(command, require_sudo=False):
     if require_sudo:
