@@ -8,6 +8,7 @@ import getpass
 import os
 import sys
 import shutil
+import hashlib
 
 __version__ = "1.3.3"
 
@@ -212,6 +213,19 @@ def list_versions():
     except Exception as e:
         print(f"Error listing versions: {e}")
 
+def files_are_identical(file1, file2):
+    """Compare two files by their hash to determine if they are identical."""
+    hash1 = hashlib.sha256()
+    hash2 = hashlib.sha256()
+
+    with open(file1, 'rb') as f1, open(file2, 'rb') as f2:
+        while chunk := f1.read(8192):
+            hash1.update(chunk)
+        while chunk := f2.read(8192):
+            hash2.update(chunk)
+
+    return hash1.digest() == hash2.digest()
+
 def update_script():
     """Update the script by pulling the latest version from the Git repository."""
     repo_url = "https://github.com/draeician/ollama-update.git"  # Replace with your actual repository URL
@@ -232,11 +246,11 @@ def update_script():
         current_script_path = os.path.abspath(__file__)
 
         # Check if the source and destination are the same
-        if updated_script_path != current_script_path:
+        if not files_are_identical(updated_script_path, current_script_path):
             # Copy the updated script to the current location
             execute_shell_command(f"sudo cp {updated_script_path} {current_script_path}", require_sudo=True)
         else:
-            print("No need to copy, the source and destination are the same.")
+            print("No need to copy, the files are identical.")
         
         print("Script updated successfully. Please restart the script.")
     except subprocess.CalledProcessError as e:
