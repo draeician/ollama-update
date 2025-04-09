@@ -8,7 +8,7 @@ import getpass
 import os
 import sys
 
-__version__ = "1.0.0"
+__version__ = "1.2.3"
 
 def execute_shell_command(command, require_sudo=False):
     if require_sudo:
@@ -187,6 +187,24 @@ def list_versions():
     except Exception as e:
         print(f"Error listing versions: {e}")
 
+def update_script():
+    """Update the script by pulling the latest version from the Git repository."""
+    repo_url = "https://github.com/draeician/ollama-update.git"  # Replace with your actual repository URL
+    tmp_dir = "/tmp/ollama_update"
+    
+    try:
+        # Clone the repository to /tmp
+        execute_shell_command(f"git clone {repo_url} {tmp_dir}")
+        
+        # Copy the updated script to the current location
+        script_name = os.path.basename(__file__)
+        updated_script_path = os.path.join(tmp_dir, script_name)
+        execute_shell_command(f"cp {updated_script_path} {os.path.abspath(__file__)}")
+        
+        print("Script updated successfully. Please restart the script.")
+    except Exception as e:
+        print(f"Error updating script: {e}")
+
 def main():
     username = getpass.getuser()  # Dynamically get the current username
     parser = argparse.ArgumentParser(description='Ollama service updater script.')
@@ -194,24 +212,29 @@ def main():
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
     parser.add_argument('--set-version', type=str, help='Specify a specific version to install (e.g., 0.4.0-rc6)')
     parser.add_argument('--list-versions', action='store_true', help='List available Ollama versions')
+    parser.add_argument('--update', action='store_true', help='Update the script to the latest version from the repository')
     
     try:
         args = parser.parse_args()
+        
+        if args.update:
+            update_script()
+            sys.exit(0)
+        
+        service_file_path = "/etc/systemd/system/ollama.service"
+
+        if args.setup:
+            setup_sudoers()
+        elif args.list_versions:
+            list_versions()
+        else:
+            update_ollama(args.set_version)
+            if add_env_variables(service_file_path):
+                reload_and_restart_service()
     except argparse.ArgumentError as e:
         parser.print_help()
         print(f"\nError: {e}")
         sys.exit(1)
-
-    service_file_path = "/etc/systemd/system/ollama.service"
-
-    if args.setup:
-        setup_sudoers()
-    elif args.list_versions:
-        list_versions()
-    else:
-        update_ollama(args.set_version)
-        if add_env_variables(service_file_path):
-            reload_and_restart_service()
 
 if __name__ == "__main__":
     main()
