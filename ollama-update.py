@@ -215,11 +215,13 @@ def update_script():
         # Copy the updated script to the current location
         script_name = os.path.basename(__file__)
         updated_script_path = os.path.join(tmp_dir, script_name)
-        execute_shell_command(f"cp {updated_script_path} {os.path.abspath(__file__)}")
+        execute_shell_command(f"sudo cp {updated_script_path} {os.path.abspath(__file__)}", require_sudo=True)
         
         print("Script updated successfully. Please restart the script.")
-    except Exception as e:
+    except subprocess.CalledProcessError as e:
         print(f"Error updating script: {e}")
+    except Exception as e:
+        print(f"Unexpected error during update: {e}")
 
 def main():
     username = getpass.getuser()  # Dynamically get the current username
