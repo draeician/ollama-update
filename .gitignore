@@ -1,1 +1,4 @@
 archive/
+
+# Cursor specific
+.cursor/rules/*.mdc
