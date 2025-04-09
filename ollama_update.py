@@ -29,6 +29,24 @@ def update_ollama(version=None):
     else:
         execute_shell_command("/tmp/update_ollama.sh", require_sudo=True)
 
+def check_version_mismatch():
+    """Check for potential version mismatch between client and server."""
+    if 'OLLAMA_HOST' in os.environ:
+        try:
+            # Get client version
+            result = subprocess.run(['ollama', '--version'], 
+                                 capture_output=True, text=True)
+            if result.returncode == 0:
+                client_version = result.stdout.strip()
+                print("\nWarning: OLLAMA_HOST environment variable is set.")
+                print("This means you're connecting to a remote Ollama server.")
+                print("There might be version mismatches between your client and server.")
+                print(f"Current client version: {client_version}")
+                print("Please ensure your remote server version matches your client version.")
+                print("You can check the server version with: curl $OLLAMA_HOST/version")
+        except Exception as e:
+            print(f"Warning: Could not check Ollama version: {e}")
+
 def setup_sudoers():
     """Setup sudoers file for the current user.
     
@@ -44,6 +62,9 @@ def setup_sudoers():
     
     try:
         print(f"Setting up sudoers for user {username}")
+        
+        # Check for version mismatch
+        check_version_mismatch()
         
         # Create temporary file with content
         with open(temp_file, "w") as file:
