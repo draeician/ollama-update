@@ -10,7 +10,7 @@ import sys
 import shutil
 import hashlib
 
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 
 def execute_shell_command(command, require_sudo=False):
     if require_sudo:
