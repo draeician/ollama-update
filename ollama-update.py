@@ -243,10 +243,16 @@ def update_script():
         # Determine the script paths
         script_name = os.path.basename(__file__)
         updated_script_path = os.path.join(tmp_dir, script_name)
-        current_script_path = os.path.abspath(__file__)
+        current_script_path = f"/usr/local/bin/{script_name}"
 
-        # Check if the source and destination are the same
-        if not files_are_identical(updated_script_path, current_script_path):
+        print(f"updated_script_path: {updated_script_path}")
+        print(f"current_script_path: {current_script_path}")
+        
+        # Check if the current script exists
+        if not os.path.exists(current_script_path):
+            print(f"{current_script_path} does not exist. Proceeding with copy.")
+            execute_shell_command(f"sudo cp {updated_script_path} {current_script_path}", require_sudo=True)
+        elif not files_are_identical(updated_script_path, current_script_path):
             # Copy the updated script to the current location
             execute_shell_command(f"sudo cp {updated_script_path} {current_script_path}", require_sudo=True)
         else:
