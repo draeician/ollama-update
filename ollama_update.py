@@ -6,6 +6,7 @@ import argparse
 import subprocess
 import getpass
 import os
+import sys
 
 __version__ = "1.0.0"
 
@@ -121,7 +122,13 @@ def main():
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
     parser.add_argument('--set-version', type=str, help='Specify a specific version to install (e.g., 0.4.0-rc6)')
     parser.add_argument('--list-versions', action='store_true', help='List available Ollama versions')
-    args = parser.parse_args()
+    
+    try:
+        args = parser.parse_args()
+    except argparse.ArgumentError as e:
+        parser.print_help()
+        print(f"\nError: {e}")
+        sys.exit(1)
 
     service_file_path = "/etc/systemd/system/ollama.service"
 
