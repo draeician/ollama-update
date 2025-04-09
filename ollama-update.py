@@ -7,6 +7,7 @@ import subprocess
 import getpass
 import os
 import sys
+import shutil
 
 __version__ = "1.3.2"
 
@@ -19,6 +20,14 @@ def execute_shell_command(command, require_sudo=False):
         print(f"Error executing command: {e}")
 
 def update_ollama(version=None):
+    # Define the temporary directory path
+    tmp_dir = '/tmp/ollama-update'
+
+    # Check if the directory exists
+    if os.path.exists(tmp_dir):
+        # Remove the directory
+        shutil.rmtree(tmp_dir)
+
     # Step 1: Download the script
     execute_shell_command("curl -fsSL -o /tmp/update_ollama.sh https://ollama.com/install.sh")
     # Step 2: Make the script executable
@@ -207,15 +216,27 @@ def update_script():
     """Update the script by pulling the latest version from the Git repository."""
     repo_url = "https://github.com/draeician/ollama-update.git"  # Replace with your actual repository URL
     tmp_dir = "/tmp/ollama-update"
-    
+
+    # Check if the directory exists
+    if os.path.exists(tmp_dir):
+        # Remove the directory
+        shutil.rmtree(tmp_dir)
+
     try:
         # Clone the repository to /tmp
         execute_shell_command(f"git clone {repo_url} {tmp_dir}")
         
-        # Copy the updated script to the current location
+        # Determine the script paths
         script_name = os.path.basename(__file__)
         updated_script_path = os.path.join(tmp_dir, script_name)
-        execute_shell_command(f"sudo cp {updated_script_path} {os.path.abspath(__file__)}", require_sudo=True)
+        current_script_path = os.path.abspath(__file__)
+
+        # Check if the source and destination are the same
+        if updated_script_path != current_script_path:
+            # Copy the updated script to the current location
+            execute_shell_command(f"sudo cp {updated_script_path} {current_script_path}", require_sudo=True)
+        else:
+            print("No need to copy, the source and destination are the same.")
         
         print("Script updated successfully. Please restart the script.")
     except subprocess.CalledProcessError as e:
